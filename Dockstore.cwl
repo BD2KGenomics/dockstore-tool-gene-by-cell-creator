@@ -22,7 +22,7 @@ doc: |
 
 requirements:
 - class: DockerRequirement
-  dockerPull: quay.io/briandoconnor/dockstore-tool-md5sum:1.0.3
+  dockerPull: quay.io/ucsc_cgl/dockstore-tool-gene-by-cell-creator:latest
 - class: InlineJavascriptRequirement
 
 hints:
@@ -32,6 +32,7 @@ hints:
   ramMin: 1024
   outdirMin: 512000
 
+# this might need to be a directory or array of files?  An array may cause problems if > 100???  We need a naming convention so you know the cell name to associate. 
 inputs:
   input_file:
     type: File
