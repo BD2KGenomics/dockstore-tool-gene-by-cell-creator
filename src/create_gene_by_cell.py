@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import os
-import sys
+import argparse
 import subprocess
 import glob
+import time
 
 class GeneByCellCreator:
     RSEM_GENE_LOC       = "RSEM/rsem_genes.results"
@@ -17,20 +18,24 @@ class GeneByCellCreator:
     KALLISTO_ISO_KEY    = "target_id"
     KALLISTO_ISO_COUNT_KEY = "est_counts"
 
-    def __init__(self, input_directory =".", input_filetype =".tar.gz", output_directory=".",
-                 rsem_gene = True, rsem_iso = True, kallisto_iso = True,
-                 rsem_gene_outfile = "rsem_cell_by_gene.tsv", rsem_iso_outfile = "rsem_cell_by_isoform.tsv",
-                 kallisto_iso_outfile = "kallisto_cell_by_isoform.tsv"):
+    INPUT_FILETYPE = ".tar.gz"
+
+    def __init__(self, input_directory, output_directory, rsem_gene, rsem_iso, kallisto_iso,
+                 rsem_gene_outfile, rsem_iso_outfile, kallisto_iso_outfile):
 
         #directories
         self.input_directory = input_directory
-        self.input_filetype = input_filetype if input_filetype.startswith(".") else ("." + input_filetype)
         self.output_directory = output_directory
 
         # what analysis to run
         self.get_rsem_gene = rsem_gene
         self.get_rsem_iso = rsem_iso
         self.get_kallisto_iso = kallisto_iso
+        if not (self.get_rsem_gene or self.get_rsem_iso or self.get_kallisto_iso):
+            #none of these were specified -> do all of them
+            self.get_rsem_gene = True
+            self.get_rsem_iso = True
+            self.get_kallisto_iso = True
 
         # names of output files
         self.rsem_gene_outfile = rsem_gene_outfile
@@ -49,13 +54,30 @@ class GeneByCellCreator:
 
 
     def main(self):
-
-        # sanity checks
-        if not (self.get_rsem_gene or self.get_rsem_iso or self.get_kallisto_iso):
-            raise Exception("Configured to collect no counts!")
+        #reporting
+        start = time.time()
 
         # extract all data
         uuid_to_file = self.get_uuid_to_file_location()
+
+        # document what will be attempted
+        action_string = ""
+        if self.get_rsem_gene:
+            action_string += "RSEM genes"
+        if self.get_rsem_iso:
+            if action_string != '': action_string += ", "
+            action_string += "RSEM isoforms"
+        if self.get_kallisto_iso:
+            if action_string != '': action_string += ", "
+            action_string += "Kallisto isoforms"
+        print "Building Cell x Count matrices for %s" % action_string
+
+        # tracking progress as it's happening
+        idx = 0
+        total = len(uuid_to_file)
+        next_report_idx = int(total / (2**5)) + 1
+        counts_start = time.time()
+
         # get counts for each uuid
         for uuid in uuid_to_file.keys():
             if self.get_rsem_gene:
@@ -64,17 +86,31 @@ class GeneByCellCreator:
                 self.rsem_iso_uuid_to_counts[uuid] = self.get_rsem_isoform_counts(uuid_to_file[uuid])
             if self.get_kallisto_iso:
                 self.kallisto_iso_uuid_to_counts[uuid] = self.get_kallisto_isoform_counts(uuid_to_file[uuid])
+            #report
+            idx += 1
+            if idx == next_report_idx:
+                print "Handled %d / %d UUIDs in %d seconds" % (idx, total, time.time() - counts_start)
+                next_report_idx *= 2
 
         # write them out
+        output_files = list()
         if self.get_rsem_gene:
-            self.write_file_out(self.rsem_gene_uuid_to_counts, self.rsem_gene_ids,
-                                os.path.join(self.output_directory, self.rsem_gene_outfile))
+            rsem_gene_out = os.path.join(self.output_directory, self.rsem_gene_outfile)
+            print "Writing RSEM gene file to %s" % rsem_gene_out
+            self.write_file_out(self.rsem_gene_uuid_to_counts, self.rsem_gene_ids, rsem_gene_out)
+            output_files.append(rsem_gene_out)
         if self.get_rsem_iso:
-            self.write_file_out(self.rsem_iso_uuid_to_counts, self.rsem_iso_ids,
-                                os.path.join(self.output_directory, self.rsem_iso_outfile))
+            rsem_iso_out = os.path.join(self.output_directory, self.rsem_iso_outfile)
+            print "Writing RSEM iso file to %s" % rsem_iso_out
+            self.write_file_out(self.rsem_iso_uuid_to_counts, self.rsem_iso_ids, rsem_iso_out)
+            output_files.append(rsem_iso_out)
         if self.get_kallisto_iso:
-            self.write_file_out(self.kallisto_iso_uuid_to_counts, self.kallisto_iso_ids,
-                                os.path.join(self.output_directory, self.kallisto_iso_outfile))
+            kallisto_iso_out = os.path.join(self.output_directory, self.kallisto_iso_outfile)
+            print "Writing Kallisto iso file to %s" % kallisto_iso_out
+            self.write_file_out(self.kallisto_iso_uuid_to_counts, self.kallisto_iso_ids, kallisto_iso_out)
+            output_files.append(kallisto_iso_out)
+
+        print "Fin (%ds)." % (time.time() - start)
 
 
 
@@ -84,25 +120,38 @@ class GeneByCellCreator:
         uuid_to_file = dict()
 
         # get filepaths
-        filepath_stringmatcher = os.path.join(self.input_directory, "*" + self.input_filetype)
+        filepath_stringmatcher = os.path.join(self.input_directory, "*" + GeneByCellCreator.INPUT_FILETYPE)
         filepaths = glob.glob(filepath_stringmatcher)
         if len(filepaths) == 0:
             raise Exception ("Found no files matching: %s" % filepath_stringmatcher)
 
-        for filepath in filepaths:
-            #untar
-            subprocess.check_call(['tar', 'xvf', filepath], cwd=self.input_directory)
-            #verify success
-            expected_output_dir = filepath.rstrip(self.input_filetype)
-            if not os.path.isdir(expected_output_dir):
-                raise Exception("After untarring %s, expected output location was not found: %s" % (filepath, expected_output_dir))
-            #get uuid
-            uuid = os.path.basename(expected_output_dir)
-            if uuid_to_file.has_key(uuid):
-                raise Exception("UUID %s found twice" % uuid)
-            #save and continue
-            uuid_to_file[uuid] = expected_output_dir
+        # tracking progress as it's happening
+        idx = 0
+        total = len(filepaths)
+        next_report_idx = int(total / (2**5)) + 1
+        start = time.time()
 
+        with open(os.devnull, 'w') as FNULL:
+            for filepath in filepaths:
+                #untar
+                subprocess.check_call(['tar', 'xvf', filepath], cwd=self.input_directory, stdout=FNULL)
+                #verify success
+                expected_output_dir = filepath.rstrip(GeneByCellCreator.INPUT_FILETYPE)
+                if not os.path.isdir(expected_output_dir):
+                    raise Exception("After untarring %s, expected output location was not found: %s" % (filepath, expected_output_dir))
+                #get uuid
+                uuid = os.path.basename(expected_output_dir)
+                if uuid_to_file.has_key(uuid):
+                    raise Exception("UUID %s found twice" % uuid)
+                #save and continue
+                uuid_to_file[uuid] = expected_output_dir
+                # report
+                idx += 1
+                if idx == next_report_idx:
+                    print "Untarred %d / %d files in %d seconds" % (idx, total, time.time() - start)
+                    next_report_idx *= 2
+
+        print "Untarred %d files" % len(filepaths)
         return uuid_to_file
 
 
@@ -242,10 +291,42 @@ class GeneByCellCreator:
                 f.write("\n")
 
 
+def parse_arguments():
+
+    parser = argparse.ArgumentParser("Creates Gene/Isoform by Cell matrix from output of Toil RNASeq workflow")
+
+    # locations
+    parser.add_argument('--output_dir', '-o', action='store', dest='output_directory', default=".",
+                        help="Location for output")
+    parser.add_argument('--input_dir', '-i', action='store', dest='input_directory', default=".",
+                        help="Location where input files are stored")
+
+    # what files to generate
+    parser.add_argument('--rsem_gene', '-g', action='store_true', dest='rsem_gene', default=False,
+                        help="output RSEM gene counts")
+    parser.add_argument('--rsem_isoform', '-s', action='store_true', dest='rsem_iso', default=False,
+                        help="output RSEM isoform counts")
+    parser.add_argument('--kallisto_isoform', '-k', action='store_true', dest='kallisto_iso', default=False,
+                        help="output Kallisto isoform counts")
+
+    # file names
+    parser.add_argument('--rsem_gene_filename', action='store', dest='rsem_gene_outfile', default="rsem_cell_by_gene.tsv",
+                        help="Name of RSEM gene outputfile")
+    parser.add_argument('--rsem_isoform_filename', action='store', dest='rsem_iso_outfile', default="rsem_cell_by_isoform.tsv",
+                        help="Name of RSEM isoform outputfile")
+    parser.add_argument('--kallisto_isoform_filename', action='store', dest='kallisto_iso_outfile', default="kallisto_cell_by_isoform.tsv",
+                        help="Name of Kallisto isoform outputfile")
+
+    return parser.parse_args()
+
 
 
 
 
 
 if __name__ == "__main__":
-    GeneByCellCreator().main()
+    args = parse_arguments()
+    GeneByCellCreator(input_directory=args.input_directory, output_directory=args.output_directory,
+                      rsem_gene=args.rsem_gene, rsem_iso=args.rsem_iso, kallisto_iso=args.kallisto_iso,
+                      rsem_gene_outfile=args.rsem_gene_outfile, rsem_iso_outfile=args.rsem_iso_outfile,
+                      kallisto_iso_outfile=args.kallisto_iso_outfile).main()
