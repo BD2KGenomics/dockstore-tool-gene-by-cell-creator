@@ -5,15 +5,21 @@
 # Set the base image to Ubuntu
 FROM ubuntu:16.04
 
+RUN apt-get update && apt-get install -y python
+
 # File Author / Maintainer
-MAINTAINER Brian O'Connor <briandoconnor@gmail.com>
+MAINTAINER Trevor Pesout <tpesout@ucsc.edu>
 
 # Setup packages
 USER root
 
 # copy over the script
-COPY bin/my_md5sum /bin/
-RUN chmod a+x /bin/my_md5sum
+COPY src/create_gene_by_cell.py /bin/
+RUN chmod a+x /bin/create_gene_by_cell.py
 
-# by default /bin/bash is executed
-CMD ["/bin/bash"]
+# init data directory
+RUN mkdir /data
+WORKDIR /data
+
+#CMD ["/bin/create_gene_by_cell.py"]
+ENTRYPOINT ["/bin/create_gene_by_cell.py"]

@@ -1,8 +1,8 @@
 #!/usr/bin/env cwl-runner
 
 class: CommandLineTool
-id: Md5sum
-label: Simple md5sum tool
+id: Gene by Cell Creator
+label: Tool for generating Gene by Cell matrix from output of Toil RNASeq workflow
 cwlVersion: v1.0
 
 $namespaces:
@@ -32,20 +32,20 @@ hints:
   ramMin: 1024
   outdirMin: 512000
 
-# this might need to be a directory or array of files?  An array may cause problems if > 100???  We need a naming convention so you know the cell name to associate. 
+# this should be a directory, but we need to pass this as a parameter to the tool
 inputs:
-  input_file:
-    type: File
+  input_directory:
+    type: Directory
     inputBinding:
       position: 1
-    doc: The file that will have its md5sum calculated.
+    doc: The directory which contains (small) sample input
 
 outputs:
   output_file:
     type: File
     format: http://edamontology.org/data_3671
     outputBinding:
-      glob: md5sum.txt
+      glob: gene_by_cell.tar.gz
     doc: A text file that contains a single line that is the md5sum of the input file.
 
-baseCommand: [/bin/my_md5sum]
+baseCommand: [/bin/create_gene_by_cell.py]

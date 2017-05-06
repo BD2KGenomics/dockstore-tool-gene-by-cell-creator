@@ -1,6 +1,6 @@
 {
-  "input_file": {
-        "class": "File",
-        "path": "md5sum.input"
+  "input_directory": {
+        "class": "Directory",
+        "path": "test_data"
     }
 }

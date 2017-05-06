@@ -21,7 +21,7 @@ class GeneByCellCreator:
     INPUT_FILETYPE = ".tar.gz"
 
     def __init__(self, input_directory, output_directory, rsem_gene, rsem_iso, kallisto_iso,
-                 rsem_gene_outfile, rsem_iso_outfile, kallisto_iso_outfile):
+                 rsem_gene_outfile, rsem_iso_outfile, kallisto_iso_outfile, tarball_outfile):
 
         #directories
         self.input_directory = input_directory
@@ -41,6 +41,7 @@ class GeneByCellCreator:
         self.rsem_gene_outfile = rsem_gene_outfile
         self.rsem_iso_outfile = rsem_iso_outfile
         self.kallisto_iso_outfile = kallisto_iso_outfile
+        self.tarball_outfile = tarball_outfile
 
         # all gene/isoform identifiers
         self.rsem_gene_ids = set()
@@ -109,6 +110,13 @@ class GeneByCellCreator:
             print "Writing Kallisto iso file to %s" % kallisto_iso_out
             self.write_file_out(self.kallisto_iso_uuid_to_counts, self.kallisto_iso_ids, kallisto_iso_out)
             output_files.append(kallisto_iso_out)
+
+        # tar all output
+        tarball_out = os.path.join(self.output_directory, self.tarball_outfile)
+        compression_args = ['tar', 'cvf', tarball_out]
+        compression_args.extend(output_files)
+        subprocess.check_call(compression_args)
+        print "Output tarball: %s" % tarball_out
 
         print "Fin (%ds)." % (time.time() - start)
 
@@ -316,6 +324,8 @@ def parse_arguments():
                         help="Name of RSEM isoform outputfile")
     parser.add_argument('--kallisto_isoform_filename', action='store', dest='kallisto_iso_outfile', default="kallisto_cell_by_isoform.tsv",
                         help="Name of Kallisto isoform outputfile")
+    parser.add_argument('--tarball_filename', action='store', dest='tarball_filename', default="gene_by_cell.tar.gz",
+                        help="Name of output tarball")
 
     return parser.parse_args()
 
@@ -329,4 +339,4 @@ if __name__ == "__main__":
     GeneByCellCreator(input_directory=args.input_directory, output_directory=args.output_directory,
                       rsem_gene=args.rsem_gene, rsem_iso=args.rsem_iso, kallisto_iso=args.kallisto_iso,
                       rsem_gene_outfile=args.rsem_gene_outfile, rsem_iso_outfile=args.rsem_iso_outfile,
-                      kallisto_iso_outfile=args.kallisto_iso_outfile).main()
+                      kallisto_iso_outfile=args.kallisto_iso_outfile, tarball_outfile=args.tarball_filename).main()
