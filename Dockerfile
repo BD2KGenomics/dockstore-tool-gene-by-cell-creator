@@ -24,4 +24,3 @@ RUN mkdir /data
 WORKDIR /data
 
 CMD ["/bin/bash"]
-#ENTRYPOINT ["/bin/create_gene_by_cell.py"]

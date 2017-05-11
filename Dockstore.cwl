@@ -17,7 +17,6 @@ requirements:
 
 hints:
 - class: ResourceRequirement
-  # The command really requires very little resources.
   coresMin: 1
   ramMin: 1024
   outdirMin: 512000
@@ -27,15 +26,33 @@ inputs:
     type: string
     inputBinding:
       position: 1
-    doc: The directory path which contains inputs
+      prefix: --input_dir
+    doc: The directory path which contains input tar.gz files, recursively searched
+
+  rsem_gene:
+    type: boolean
+    inputBinding:
+      position: 2
+      prefix: --rsem_gene
+
+  rsem_isoform:
+    type: boolean
+    inputBinding:
+      position: 3
+      prefix: --rsem_isoform
+
+  kallisto_isoform:
+    type: boolean
+    inputBinding:
+      position: 4
+      prefix: --kallisto_isoform
 
 outputs:
   output_file:
     type: File
-    format: http://edamontology.org/data_3671
+    format: http://edamontology.org/data_3615
     outputBinding:
       glob: gene_by_cell.tar.gz
-    doc: A text file that contains a cell by gene matrices.
+    doc: A text tsv file that contains the cell by gene matrices.
 
-#baseCommand: [/bin/create_gene_by_cell.py]
-baseCommand: [/bin/test.sh]
+baseCommand: ["/bin/create_gene_by_cell.py"]

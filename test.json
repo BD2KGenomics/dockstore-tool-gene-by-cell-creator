@@ -1,3 +1,6 @@
 {
-  "input_directory": "/datastore"
+  "input_directory": "/datastore",
+  "rsem_gene": true,
+  "rsem_isoform": true,
+  "kallisto_isoform": true
 }
