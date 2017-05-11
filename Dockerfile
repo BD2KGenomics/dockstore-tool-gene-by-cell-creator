@@ -15,7 +15,9 @@ USER root
 
 # copy over the script
 COPY src/create_gene_by_cell.py /bin/
+COPY src/test.sh /bin/
 RUN chmod a+x /bin/create_gene_by_cell.py
+RUN chmod a+x /bin/test.sh
 
 # init data directory
 RUN mkdir /data

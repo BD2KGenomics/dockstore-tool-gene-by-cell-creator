@@ -12,7 +12,7 @@ doc: |
 
 requirements:
 - class: DockerRequirement
-  dockerPull: quay.io/ucsc_cgl/dockstore-tool-gene-by-cell-creator:1.0.0
+  dockerPull: quay.io/ucsc_cgl/dockstore-tool-gene-by-cell-creator:latest
 - class: InlineJavascriptRequirement
 
 hints:
@@ -22,13 +22,12 @@ hints:
   ramMin: 1024
   outdirMin: 512000
 
-# this should be a directory, but we need to pass this as a parameter to the tool
 inputs:
   input_directory:
-    type: Directory
+    type: string
     inputBinding:
       position: 1
-    doc: The directory which contains (small) sample input
+    doc: The directory path which contains inputs
 
 outputs:
   output_file:
@@ -36,6 +35,7 @@ outputs:
     format: http://edamontology.org/data_3671
     outputBinding:
       glob: gene_by_cell.tar.gz
-    doc: A text file that contains a single line that is the md5sum of the input file.
+    doc: A text file that contains a cell by gene matrices.
 
-baseCommand: [/bin/create_gene_by_cell.py]
+#baseCommand: [/bin/create_gene_by_cell.py]
+baseCommand: [/bin/test.sh]
