@@ -26,6 +26,7 @@ class GeneByCellCreator:
         #directories
         self.input_directory = input_directory
         self.output_directory = output_directory
+        self.samples_in_directories = True
 
         # what analysis to run
         self.get_rsem_gene = rsem_gene
@@ -128,7 +129,10 @@ class GeneByCellCreator:
         uuid_to_file = dict()
 
         # get filepaths
-        filepath_stringmatcher = os.path.join(self.input_directory, "*" + GeneByCellCreator.INPUT_FILETYPE)
+        if (self.samples_in_directories):
+            filepath_stringmatcher = os.path.join(self.input_directory, "*", "*" + GeneByCellCreator.INPUT_FILETYPE)
+        else:
+            filepath_stringmatcher = os.path.join(self.input_directory, "*" + GeneByCellCreator.INPUT_FILETYPE)
         filepaths = glob.glob(filepath_stringmatcher)
         if len(filepaths) == 0:
             raise Exception ("Found no files matching: %s" % filepath_stringmatcher)
@@ -142,7 +146,8 @@ class GeneByCellCreator:
         with open(os.devnull, 'w') as FNULL:
             for filepath in filepaths:
                 #untar
-                subprocess.check_call(['tar', 'xvf', filepath], cwd=self.input_directory, stdout=FNULL)
+                untar_location = os.path.dirname(filepath)
+                subprocess.check_call(['tar', 'xvf', filepath, '-C', untar_location], stdout=FNULL)
                 #verify success
                 expected_output_dir = filepath.rstrip(GeneByCellCreator.INPUT_FILETYPE)
                 if not os.path.isdir(expected_output_dir):
