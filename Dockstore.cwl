@@ -1,28 +1,18 @@
 #!/usr/bin/env cwl-runner
 
 class: CommandLineTool
-id: Gene by Cell Creator
+id: GeneByCellCreator
 label: Tool for generating Gene by Cell matrix from output of Toil RNASeq workflow
 cwlVersion: v1.0
-
-$namespaces:
-  dct: http://purl.org/dc/terms/
-  foaf: http://xmlns.com/foaf/0.1/
 
 doc: |
   [![Docker Repository on Quay.io](https://quay.io/repository/briandoconnor/dockstore-tool-md5sum/status "Docker Repository on Quay.io")](https://quay.io/repository/briandoconnor/dockstore-tool-md5sum)
   [![Build Status](https://travis-ci.org/briandoconnor/dockstore-tool-md5sum.svg)](https://travis-ci.org/briandoconnor/dockstore-tool-md5sum)
-  A very, very simple Docker container for the md5sum command. See the [README](https://github.com/briandoconnor/dockstore-tool-md5sum/blob/master/README.md) for more information.
-
-
-#dct:creator:
-#  '@id': http://orcid.org/0000-0002-7681-6415
-#  foaf:name: Brian O'Connor
-#  foaf:mbox: briandoconnor@gmail.com
+  A tool for generating Gene by Cell matrix from output of Toil RNASeq workflow.
 
 requirements:
 - class: DockerRequirement
-  dockerPull: quay.io/ucsc_cgl/dockstore-tool-gene-by-cell-creator:latest
+  dockerPull: quay.io/ucsc_cgl/dockstore-tool-gene-by-cell-creator:1.0.0
 - class: InlineJavascriptRequirement
 
 hints:

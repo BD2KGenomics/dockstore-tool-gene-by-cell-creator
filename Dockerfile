@@ -21,5 +21,5 @@ RUN chmod a+x /bin/create_gene_by_cell.py
 RUN mkdir /data
 WORKDIR /data
 
-#CMD ["/bin/create_gene_by_cell.py"]
-ENTRYPOINT ["/bin/create_gene_by_cell.py"]
+CMD ["/bin/bash"]
+#ENTRYPOINT ["/bin/create_gene_by_cell.py"]
