@@ -114,7 +114,7 @@ class GeneByCellCreator:
 
         # tar all output
         tarball_out = os.path.join(self.output_directory, self.tarball_outfile)
-        compression_args = ['tar', 'cvf', tarball_out]
+        compression_args = ['tar', 'czvf', tarball_out]
         compression_args.extend(output_files)
         subprocess.check_call(compression_args)
         print "Output tarball: %s" % tarball_out
