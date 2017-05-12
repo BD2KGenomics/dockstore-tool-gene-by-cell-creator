@@ -12,7 +12,7 @@ doc: |
 
 requirements:
 - class: DockerRequirement
-  dockerPull: quay.io/ucsc_cgl/dockstore-tool-gene-by-cell-creator:latest
+  dockerPull: quay.io/ucsc_cgl/dockstore-tool-gene-by-cell-creator:1.0.1
 - class: InlineJavascriptRequirement
 
 hints:
