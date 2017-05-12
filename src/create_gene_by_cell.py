@@ -151,7 +151,10 @@ class GeneByCellCreator:
                 #verify success
                 expected_output_dir = filepath.rstrip(GeneByCellCreator.INPUT_FILETYPE)
                 if not os.path.isdir(expected_output_dir):
-                    raise Exception("After untarring %s, expected output location was not found: %s" % (filepath, expected_output_dir))
+                    (base_path, dir_name) = os.path.split(expected_output_dir)
+                    expected_output_dir = os.path.join(base_path, "FAIL."+dir_name)
+                    if not os.path.isdir(expected_output_dir):
+                        raise Exception("After untarring %s, expected output location was not found: %s" % (filepath, expected_output_dir))
                 #get uuid
                 uuid = os.path.basename(expected_output_dir)
                 if uuid_to_file.has_key(uuid):
